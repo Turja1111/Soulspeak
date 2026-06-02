@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { KeyRound, ShieldCheck } from 'lucide-react';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -13,96 +14,60 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setError('');
+
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords do not match.');
       return;
     }
 
     try {
-      const response = await axios.post(`http://localhost:5000/confirm-reset-password`, {
-        password, 
-        token
-      });
-
-      setMessage('Password reset successful!');
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+      await axios.post('http://localhost:5000/confirm-reset-password', { password, token });
+      setMessage('Password reset successful. Redirecting to login...');
+      setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
       setError('Failed to reset password. Please try again.');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4" style={{ backgroundColor: '#C5C5C5' }}>
-      <div className="max-w-md w-full space-y-8 p-10 rounded-2xl shadow-xl" style={{ backgroundColor: 'white' }}>
-        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#4D6A6D' }}>
-          Reset Password
-        </h2>
-        
-        {message && (
-          <div className="p-4 rounded-xl text-center mb-6" style={{ backgroundColor: '#e8f5e9', color: '#2e7d32' }}>
-            {message}
-          </div>
-        )}
-        
-        {error && (
-          <div className="p-4 rounded-xl text-center mb-6" style={{ backgroundColor: '#ffebee', color: '#c62828' }}>
-            {error}
-          </div>
-        )}
+    <main className="ss-page flex items-center">
+      <div className="ss-container max-w-3xl">
+        <section className="ss-panel rounded-[2rem] p-7 sm:p-10">
+          <span className="ss-badge">
+            <ShieldCheck size={15} />
+            Secure reset
+          </span>
+          <h1 className="mt-5 text-4xl font-black text-[#17332e]">Create a new password</h1>
+          <p className="mt-3 max-w-xl leading-7 text-[#66746f]">
+            Choose a password you have not used elsewhere. You will be sent back to login after it is updated.
+          </p>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: '#4D6A6D' }}>
-              New Password
+          {message && <div className="mt-6 rounded-2xl bg-emerald-50 p-4 font-semibold text-emerald-700">{message}</div>}
+          {error && <div className="mt-6 rounded-2xl bg-red-50 p-4 font-semibold text-red-700">{error}</div>}
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <label className="block">
+              <span className="mb-2 flex items-center gap-2 text-sm font-bold text-[#40534e]">
+                <KeyRound size={16} />
+                New password
+              </span>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="ss-input" required minLength={4} />
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2"
-              style={{ 
-                border: '1px solid #829191',
-                backgroundColor: 'white'
-              }}
-              required
-              minLength={4}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: '#4D6A6D' }}>
-              Confirm Password
+            <label className="block">
+              <span className="mb-2 flex items-center gap-2 text-sm font-bold text-[#40534e]">
+                <KeyRound size={16} />
+                Confirm password
+              </span>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="ss-input" required minLength={4} />
             </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2"
-              style={{ 
-                border: '1px solid #829191',
-                backgroundColor: 'white'
-              }}
-              required
-              minLength={4}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 rounded-xl font-medium mt-8 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg"
-            style={{ 
-              backgroundColor: '#4D6A6D',
-              color: 'white'
-            }}
-          >
-            Reset Password
-          </button>
-        </form>
+            <button type="submit" className="ss-button-primary w-full sm:w-auto">
+              Reset password
+            </button>
+          </form>
+        </section>
       </div>
-    </div>
+    </main>
   );
 };
 

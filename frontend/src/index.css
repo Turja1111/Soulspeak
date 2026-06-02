@@ -2,3 +2,159 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    color: #243533;
+    background: #f5f2ec;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top left, rgba(139, 184, 164, 0.22), transparent 28rem),
+      radial-gradient(circle at 85% 15%, rgba(239, 180, 127, 0.16), transparent 22rem),
+      linear-gradient(135deg, #f7f3ec 0%, #eef5f1 48%, #f8faf8 100%);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+@layer components {
+  .ss-page {
+    min-height: calc(100vh - 76px);
+    padding: 2rem 1rem;
+  }
+
+  .ss-container {
+    width: min(1180px, calc(100% - 2rem));
+    margin: 0 auto;
+  }
+
+  .ss-panel {
+    border: 1px solid rgba(72, 99, 92, 0.13);
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 24px 70px rgba(31, 56, 50, 0.1);
+    backdrop-filter: blur(18px);
+  }
+
+  .ss-card {
+    border: 1px solid rgba(72, 99, 92, 0.12);
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: 0 18px 45px rgba(31, 56, 50, 0.08);
+  }
+
+  .ss-button-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    border-radius: 999px;
+    background: #1f5f53;
+    color: white;
+    padding: 0.75rem 1.25rem;
+    font-weight: 700;
+    box-shadow: 0 14px 30px rgba(31, 95, 83, 0.24);
+    transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  }
+
+  .ss-button-primary:hover {
+    background: #17483f;
+    box-shadow: 0 18px 36px rgba(31, 95, 83, 0.28);
+    transform: translateY(-1px);
+  }
+
+  .ss-button-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    border: 1px solid rgba(31, 95, 83, 0.2);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    color: #1f5f53;
+    padding: 0.75rem 1.25rem;
+    font-weight: 700;
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+  }
+
+  .ss-button-secondary:hover {
+    border-color: rgba(31, 95, 83, 0.42);
+    background: white;
+    transform: translateY(-1px);
+  }
+
+  .ss-input {
+    width: 100%;
+    border: 1px solid rgba(72, 99, 92, 0.18);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.86);
+    padding: 0.85rem 1rem;
+    color: #243533;
+    outline: none;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  }
+
+  .ss-input:focus {
+    border-color: rgba(31, 95, 83, 0.62);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(31, 95, 83, 0.1);
+  }
+
+  .ss-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid rgba(31, 95, 83, 0.15);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.66);
+    color: #1f5f53;
+    padding: 0.38rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .ss-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    background: rgba(31, 95, 83, 0.1);
+    color: #1f5f53;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+}

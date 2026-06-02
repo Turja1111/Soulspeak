@@ -1,321 +1,265 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { set } from "mongoose";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { BadgeCheck, Camera, CheckCircle2, Edit3, MailCheck, Save, UserRound } from 'lucide-react';
 
 const Profile = () => {
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
-    const [profilePicture, setProfilePicture] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    username: '',
+    email: '',
+    password: '',
+    newPassword: '',
+    referral: '',
+    mentalCondition: '',
+    ageGroup: '',
+    country: '',
+    goals: '',
+    preferences: ''
+  });
 
+  const token = localStorage.getItem('token');
 
-    const [formData, setFormData] = useState({
-        name: "",
-        username: "",
-        email: "",
-        password: "",
-        newPassword: "",
-        referral: "",
-        mentalCondition: "",
-        ageGroup: "",
-        country: "",
-        goals: "",
-        preferences: ""
+  useEffect(() => {
+    if (!token) {
+      setError('You must be logged in to view this page.');
+      setLoading(false);
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const user = response.data.user;
+        setProfile(user);
+        setFormData({
+          name: user.name || '',
+          username: user.username || '',
+          email: user.email || '',
+          referral: user.referral || '',
+          mentalCondition: user.mentalCondition || '',
+          ageGroup: user.ageGroup || '',
+          country: user.country || '',
+          goals: user.goals || '',
+          preferences: user.preferences || '',
+          password: '',
+          newPassword: ''
+        });
+
+        const pictureResponse = await axios.get('http://localhost:5000/profile-picture', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setProfilePicture(pictureResponse.data.imageUrl ? `http://localhost:5000${pictureResponse.data.imageUrl}` : null);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load profile. Please log in again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [token]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setProfilePicture(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfilePictureUpload = async () => {
+    if (!profilePicture || typeof profilePicture === 'string') return null;
+    const data = new FormData();
+    data.append('image', profilePicture);
+    const response = await axios.post('http://localhost:5000/upload-profile-picture', data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
     });
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        setProfilePicture(file);
+    return response.data.imageUrl;
+  };
 
-        // Create preview
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
+  const handleVerifyEmail = async () => {
+    try {
+      await axios.post('http://localhost:5000/verify-email', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Verification email sent! Please check your inbox.');
+    } catch (err) {
+      setError('Failed to send verification email. Please try again.');
+    }
+  };
 
-    const handleProfilePictureUpload = async () => {
-        const token = localStorage.getItem("token");
-        const formData = new FormData();
-        formData.append('image', profilePicture);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put('http://localhost:5000/profile', formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const uploadedImage = await handleProfilePictureUpload();
+      setProfile(response.data.user);
+      if (uploadedImage) setProfilePicture(`http://localhost:5000${uploadedImage}`);
+      setImagePreview(null);
+      setIsEditing(false);
+      setError(null);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
+    }
+  };
 
-        try {
-            const response = await axios.post("http://localhost:5000/upload-profile-picture", formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data'
-                },
-            });
-            setProfile({ ...profile, imageUrl: response.data.imageUrl });
-        } catch (err) {
-            setError("Failed to upload profile picture");
-        }
-    };
-    const handleVerifyEmail = async () => {
-        const token = localStorage.getItem("token");
-        try {
-            await axios.post("http://localhost:5000/verify-email", {}, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setError(null);
-            // Show success message
-            alert("Verification email sent! Please check your inbox.");
-        } catch (err) {
-            setError("Failed to send verification email. Please try again.");
-        }
-    };
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            setError("You must be logged in to view this page.");
-            setLoading(false);
-            return;
-        }
-
-        const fetchProfile = async () => {
-            try {
-                const response = await axios.get("http://localhost:5000/profile", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const user = response.data.user;
-                setProfile(user);
-                setFormData({
-                    name: user.name,
-                    username: user.username,
-                    email: user.email,
-                    referral: user.referral,
-                    mentalCondition: user.mentalCondition,
-                    ageGroup: user.ageGroup,
-                    country: user.country,
-                    goals: user.goals,
-                    preferences: user.preferences,
-                    password: "",
-                    newPassword: "",
-                });
-                setError(null);
-                const response2 = await axios.get("http://localhost:5000/profile-picture", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                setProfilePicture(`http://localhost:5000${response2.data.imageUrl}`);
-            } catch (err) {
-                setError("Failed to load profile. Please log in again.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchProfile();
-    }, []);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const token = localStorage.getItem("token");
-        try {
-            const response = await axios.put("http://localhost:5000/profile", formData, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (profilePicture) {
-                await handleProfilePictureUpload();
-            }
-            setProfile(response.data.user);
-            console.log(response.data.user);
-            setIsEditing(false);
-            setError(null);
-        } catch (err) {
-            if (err.response) {
-                setError(err.response.data.message || "Invalid data. Please check your inputs.");
-            } else {
-                setError("Failed to update profile. Please try again.");
-            }
-        }
-    };
-
-    if (loading) return <p>Loading...</p>;
-
+  if (loading) {
     return (
-        <div className="max-w-md mx-auto mt-10 p-8 bg-white/90 rounded-xl shadow-md border border-[#C5C5C5]">
-            {error && (
-                <div className="bg-[#C5C5C5]/20 border border-[#4D6A6D] text-[#4C5B61] px-4 py-3 rounded relative mb-6" role="alert">
-                    {error}
-                </div>
-            )}
-            <div className="text-center">
-                <div className="relative inline-block w-32 h-32 mb-6">
-                    <img
-                        src={imagePreview || profilePicture || "https://via.placeholder.com/150"}
-                        alt="Profile"
-                        className="w-32 h-32 rounded-full border-4 border-sage-100 object-cover"
-                    />
-
-                    {isEditing && (
-                        <label className="absolute bottom-2 right-2 bg-[#4D6A6D] p-2 rounded-full cursor-pointer hover:bg-[#829191] transition-all duration-300 ease-in-out z-10">
-                            <input
-                                type="file"
-                                className="hidden"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                            />
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                            </svg>
-                        </label>
-                    )}
-                </div>
-                {!isEditing ? (
-                    <>
-                        <h3 className="text-xl font-semibold text-[#4D6A6D]">{profile.name}</h3>
-
-                        <p className="text-[#949896] mt-2">
-                            Email: {profile.email}
-                            {profile.verified ? (
-                                <span className="ml-2 text-[#4D6A6D]">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                </span>
-                            ) : (
-                                <button
-                                    onClick={handleVerifyEmail}
-                                    className="ml-2 px-3 py-1 text-sm bg-[#4D6A6D] text-white rounded-md hover:bg-[#829191] transition-all duration-300 ease-in-out"
-                                >
-                                    Verify Email
-                                </button>
-                            )}
-                        </p>
-
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className="mt-6 px-8 py-3 bg-[#4D6A6D] text-white rounded-lg hover:bg-[#829191] transition-all duration-300 ease-in-out"
-                        >
-                            Edit Profile
-                        </button>
-                    </>
-                ) : (
-                    <form onSubmit={handleSubmit} className="space-y-5 mt-6">
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            placeholder="Name"
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        />
-                        <input
-                            type="text"
-                            name="username"
-                            value={formData.username}
-                            onChange={handleChange}
-                            placeholder="Username"
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        />
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="Email"
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        />
-                        <select
-                            name="referral"
-                            value={formData.referral}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        >
-                            <option value="">How did you find us?</option>
-                            <option value="social">Social Media</option>
-                            <option value="friend">Friend</option>
-                            <option value="search">Search Engine</option>
-                            <option value="other">Other</option>
-                        </select>
-
-                        <select
-                            name="mentalCondition"
-                            value={formData.mentalCondition}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        >
-                            <option value="">Select your condition</option>
-                            <option value="Anxiety">Anxiety</option>
-                            <option value="Depression">Depression</option>
-                            <option value="PTSD">PTSD</option>
-                            <option value="Bipolar">Bipolar</option>
-                            <option value="Other">Other</option>
-                        </select>
-
-                        <select
-                            name="ageGroup"
-                            value={formData.ageGroup}
-                            onChange={handleChange}
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        >
-                            <option value="">Select age group</option>
-                            <option value="Under 18">Under 18</option>
-                            <option value="18-24">18-24</option>
-                            <option value="25-34">25-34</option>
-                            <option value="35-44">35-44</option>
-                            <option value="45-54">45-54</option>
-                            <option value="55+">55+</option>
-                        </select>
-
-                        <input
-                            type="text"
-                            name="country"
-                            value={formData.country}
-                            onChange={handleChange}
-                            placeholder="Country"
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        />
-                        <textarea
-                            name="goals"
-                            value={formData.goals}
-                            onChange={handleChange}
-                            placeholder="What are your goals?"
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        />
-                        <textarea
-                            name="preferences"
-                            value={formData.preferences}
-                            onChange={handleChange}
-                            placeholder="Your preferences"
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        />
-                        <input
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Current Password"
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        />
-                        <input
-                            type="password"
-                            name="newPassword"
-                            value={formData.newPassword}
-                            onChange={handleChange}
-                            placeholder="New Password (optional)"
-                            className="w-full px-4 py-3 border border-[#C5C5C5] rounded-lg focus:outline-none focus:border-[#4D6A6D] bg-white/80"
-                        />
-                        <button
-                            type="submit"
-                            className="w-full bg-[#4D6A6D] text-white py-3 rounded-lg hover:bg-[#829191] transition-all duration-300 ease-in-out"
-                        >
-                            Save Changes
-                        </button>
-                    </form>
-                )}
-            </div>
-        </div>
+      <main className="ss-page flex items-center justify-center">
+        <div className="ss-panel rounded-3xl p-8 font-bold text-[#1f5f53]">Loading your space...</div>
+      </main>
     );
+  }
+
+  return (
+    <main className="ss-page">
+      <div className="ss-container grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
+        <aside className="ss-panel rounded-[2rem] p-7">
+          {error && <div className="mb-5 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div>}
+
+          <div className="text-center">
+            <div className="relative mx-auto h-36 w-36">
+              <img
+                src={imagePreview || profilePicture || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80'}
+                alt="Profile"
+                className="h-36 w-36 rounded-[2rem] border-4 border-white object-cover shadow-xl"
+              />
+              {isEditing && (
+                <label className="absolute -bottom-2 -right-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1f5f53] text-white shadow-lg">
+                  <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                  <Camera size={20} />
+                </label>
+              )}
+            </div>
+
+            <h1 className="mt-6 text-3xl font-black text-[#17332e]">{profile?.name || 'SoulSpeak member'}</h1>
+            <p className="mt-1 font-bold text-[#66746f]">@{profile?.username}</p>
+
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <span className="ss-badge">
+                <UserRound size={14} />
+                {profile?.isCompanion ? 'Companion' : 'Member'}
+              </span>
+              <span className={`ss-badge ${profile?.verified ? '' : 'bg-amber-100 text-amber-800'}`}>
+                <BadgeCheck size={14} />
+                {profile?.verified ? 'Verified' : 'Unverified'}
+              </span>
+            </div>
+
+            {!profile?.verified && (
+              <button onClick={handleVerifyEmail} className="ss-button-secondary mt-6 w-full">
+                <MailCheck size={18} />
+                Verify email
+              </button>
+            )}
+
+            <button onClick={() => setIsEditing((value) => !value)} className="ss-button-primary mt-3 w-full">
+              <Edit3 size={18} />
+              {isEditing ? 'Close editor' : 'Edit profile'}
+            </button>
+          </div>
+        </aside>
+
+        <section className="ss-card rounded-[2rem] p-6 sm:p-8">
+          {!isEditing ? (
+            <>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-black uppercase text-[#1f5f53]">Member profile</p>
+                  <h2 className="mt-2 text-3xl font-black text-[#17332e]">Your support preferences</h2>
+                </div>
+                <CheckCircle2 className="text-[#1f5f53]" size={30} />
+              </div>
+
+              <div className="mt-8 grid gap-4 md:grid-cols-2">
+                {[
+                  ['Email', profile?.email],
+                  ['Country', profile?.country],
+                  ['Age group', profile?.ageGroup],
+                  ['Condition', profile?.mentalCondition],
+                  ['Found us through', profile?.referral],
+                  ['Communication', profile?.preferences]
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-3xl bg-[#f7f3ec] p-5">
+                    <p className="text-xs font-black uppercase text-[#788780]">{label}</p>
+                    <p className="mt-2 font-bold text-[#243533]">{value || 'Not provided'}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 rounded-3xl bg-[#e7f4f0] p-5">
+                <p className="text-xs font-black uppercase text-[#1f5f53]">Goals</p>
+                <p className="mt-2 leading-7 text-[#40534e]">{profile?.goals || 'No goals added yet.'}</p>
+              </div>
+            </>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <p className="text-sm font-black uppercase text-[#1f5f53]">Edit profile</p>
+                <h2 className="mt-2 text-3xl font-black text-[#17332e]">Keep your details fresh</h2>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {[
+                  ['name', 'Name'],
+                  ['username', 'Username'],
+                  ['email', 'Email'],
+                  ['country', 'Country'],
+                  ['referral', 'How did you find us?'],
+                  ['mentalCondition', 'Condition'],
+                  ['ageGroup', 'Age group'],
+                  ['preferences', 'Preferences'],
+                  ['password', 'Current password', 'password'],
+                  ['newPassword', 'New password', 'password']
+                ].map(([name, placeholder, type]) => (
+                  <input
+                    key={name}
+                    type={type || 'text'}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    placeholder={placeholder}
+                    className="ss-input"
+                  />
+                ))}
+              </div>
+              <textarea
+                name="goals"
+                value={formData.goals}
+                onChange={handleChange}
+                placeholder="What are your goals?"
+                className="ss-input min-h-32"
+              />
+              <button type="submit" className="ss-button-primary w-full sm:w-auto">
+                <Save size={18} />
+                Save changes
+              </button>
+            </form>
+          )}
+        </section>
+      </div>
+    </main>
+  );
 };
 
 export default Profile;

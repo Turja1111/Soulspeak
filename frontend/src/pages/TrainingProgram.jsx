@@ -1,83 +1,71 @@
-import { MailQuestion } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import { ExternalLink, MailQuestion, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const TrainingProgram = () => {
-    const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState([]);
 
-    useEffect(() => {
-        const fetchQuestions = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await axios.get('http://localhost:5000/questions', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setQuestions(response.data);
-            } catch (error) {
-                console.error('Error fetching questions:', error);
-            }
-        };
-        fetchQuestions();
-    }, []);
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:5000/questions', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setQuestions(response.data);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+      }
+    };
+    fetchQuestions();
+  }, []);
 
-    return (
-        <div className="min-h-screen py-12 px-4" style={{ backgroundColor: '#f8f9fa' }}>
-            <div className="max-w-4xl mx-auto">
-                <h1 className="text-4xl font-bold text-center mb-3" style={{ color: '#4D6A6D' }}>
-                    SoulSpeak Training Program
-                </h1>
-                <p className="text-lg mb-12 text-center" style={{ color: '#4C5B61' }}>
-                    Enhance your understanding with detailed explanations and curated resources for each topic.
-                </p>
+  return (
+    <main className="ss-page">
+      <div className="ss-container">
+        <section className="rounded-[2rem] bg-[#17332e] p-7 text-white shadow-2xl">
+          <span className="ss-badge bg-white/10 text-white">
+            <Sparkles size={15} />
+            Companion growth path
+          </span>
+          <h1 className="mt-5 text-4xl font-black">SoulSpeak Training Program</h1>
+          <p className="mt-3 max-w-3xl leading-8 text-white/74">
+            Build the listening, empathy, and communication skills needed to become a steadier companion.
+          </p>
+        </section>
 
-                <div className="space-y-6">
-                    {questions.map((question, index) => (
-                        <div 
-                            key={index} 
-                            className="rounded-xl shadow-lg transition-transform duration-300 hover:transform hover:scale-[1.02]"
-                            style={{ 
-                                background: 'white',
-                                borderLeft: '4px solid #4D6A6D'
-                            }}
-                        >
-                            <div className="p-6">
-                                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2" style={{ color: '#4D6A6D' }}>
-                                    <MailQuestion className="w-6 h-6" />
-                                    Topic {index + 1}: {question.question}
-                                </h2>
-
-                                <div className="mt-6">
-                                    <h3 className="text-lg font-medium mb-3" style={{ color: '#4C5B61' }}>
-                                        Related Resources
-                                    </h3>
-                                    <div className="pl-4 py-3 rounded-md" style={{ backgroundColor: '#f8f9fa' }}>
-                                        <a 
-                                            href={question.resource} 
-                                            target='_blank' 
-                                            className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
-                                        >
-                                            {question.resource}
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+        <section className="mt-6 grid gap-4">
+          {questions.map((question, index) => (
+            <article key={question._id || index} className="ss-card rounded-[2rem] p-6 transition hover:-translate-y-0.5 hover:shadow-2xl">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <span className="ss-badge">
+                    <MailQuestion size={15} />
+                    Topic {index + 1}
+                  </span>
+                  <h2 className="mt-4 text-2xl font-black text-[#17332e]">{question.question}</h2>
+                  <p className="mt-3 leading-7 text-[#66746f]">
+                    Review the supporting material, then come back to the companion assessment when you feel ready.
+                  </p>
                 </div>
-
-                {/* <div className="mt-12 text-center">
-                    <button 
-                        className="px-8 py-3 rounded-full font-medium text-white shadow-lg transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1"
-                        style={{ 
-                            backgroundColor: '#4D6A6D',
-                        }}
-                    >
-                        Track Your Progress
-                    </button>
-                </div> */}
+                {question.resource && (
+                  <a href={question.resource} target="_blank" rel="noreferrer" className="ss-button-secondary shrink-0">
+                    Resource
+                    <ExternalLink size={17} />
+                  </a>
+                )}
+              </div>
+            </article>
+          ))}
+          {questions.length === 0 && (
+            <div className="ss-card rounded-[2rem] p-8 text-center font-semibold text-[#66746f]">
+              Training topics will appear here once an admin adds companion questions.
             </div>
-        </div>
-    );
+          )}
+        </section>
+      </div>
+    </main>
+  );
 };
 
 export default TrainingProgram;
