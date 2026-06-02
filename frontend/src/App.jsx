@@ -1,6 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, NavLink } from 'react-router-dom';
 import axios from 'axios';
+
+// Axios interceptor to rewrite local API URL in production
+axios.interceptors.request.use((config) => {
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (!isLocal && config.url && config.url.startsWith('http://localhost:5000')) {
+    config.url = config.url.replace('http://localhost:5000', '/api');
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
 import {
   ArrowRight,
   BookOpenCheck,

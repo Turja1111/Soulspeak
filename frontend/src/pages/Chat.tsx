@@ -66,7 +66,9 @@ const Chat: React.FC = () => {
   };
 
   const initializeSocket = () => {
-    socket.current = io('http://localhost:5000', {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const socketUrl = isLocal ? 'http://localhost:5000' : window.location.origin;
+    socket.current = io(socketUrl, {
       auth: { token: localStorage.getItem('token') }
     });
 

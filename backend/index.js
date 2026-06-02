@@ -42,5 +42,9 @@ chatSocket(io);
 connectDB();    
 
 // Start Server
-server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+}
+
+export default app;
 
