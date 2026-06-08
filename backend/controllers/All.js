@@ -176,6 +176,10 @@ export async function signup(request, response) {
                 });
             }
         }
+        const existingUsername = await User.findOne({ username });
+        if (existingUsername) {
+            return response.status(400).json({ message: "Username already in use." });
+        }
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
             referral,
@@ -215,13 +219,33 @@ export async function login(request, response) {
         if (!user) {
             return response.status(401).json({ message: "Invalid email or password." });
         }
+        // Check for account lock
+        if (user.lockUntil && user.lockUntil > Date.now()) {
+            const waitMinutes = Math.ceil((user.lockUntil - Date.now()) / 60000);
+            return response.status(403).json({ message: `Account locked. Try again in ${waitMinutes} minute(s).` });
+        }
         if (user.suspended) {
             return response.status(403).json({ message: "Your account has been suspended." });
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
+            // Increment failed attempts and apply lockout if threshold exceeded
+            user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+            const MAX_ATTEMPTS = 5;
+            const LOCK_MINUTES = 30;
+            if (user.failedLoginAttempts >= MAX_ATTEMPTS) {
+                user.lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000);
+                await user.save();
+                return response.status(403).json({ message: `Account locked due to multiple failed attempts. Try again in ${LOCK_MINUTES} minutes.` });
+            }
+            await user.save();
             return response.status(401).json({ message: "Invalid email or password." });
         }
+        // Reset failed attempts on successful login
+        user.failedLoginAttempts = 0;
+        user.lockUntil = null;
+        await user.save();
+
         const token = jwt.sign(
             { id: user._id, email: user.email, username: user.username },
             process.env.JWT_SECRET,

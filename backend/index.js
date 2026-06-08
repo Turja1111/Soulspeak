@@ -1,6 +1,7 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from "dotenv"
+import helmet from 'helmet';
 import { connectDB } from './config/db.js';
 import router from './routes/route.js';
 import adminRouter from './routes/adminRoute.js';
@@ -10,7 +11,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import chatSocket from './socket/chatSocket.js';
 
-dotenv.config();
+// dotenv is loaded via the top-level import 'dotenv/config'
 
 const app = express();
 const PORT = process.env.PORT ||  5001;
@@ -26,6 +27,7 @@ const io = new Server(server, {
 app.set('io', io);
 
 // Middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
