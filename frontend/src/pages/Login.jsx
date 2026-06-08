@@ -23,7 +23,18 @@ const Login = () => {
       const response = await axios.post('http://localhost:5000/login', formData);
       if (response.status === 200) {
         localStorage.setItem('token', response.data.token);
-        navigate('/');
+        // Try to fetch the profile immediately and dispatch it so App can update UI without waiting
+        try {
+          const profileRes = await axios.get('http://localhost:5000/profile', {
+            headers: { Authorization: `Bearer ${response.data.token}` }
+          });
+          const user = profileRes.data.user;
+          try { window.dispatchEvent(new CustomEvent('user:login', { detail: user })); } catch (e) {}
+        } catch (e) {
+          // still notify app to attempt refresh if profile fetch failed
+          try { window.dispatchEvent(new Event('user:login')); } catch (err) {}
+        }
+        navigate('/home');
       }
     } catch (error) {
       setError(error.response?.data?.message || 'Invalid email or password.');

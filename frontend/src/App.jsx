@@ -239,6 +239,19 @@ const App = () => {
     fetchUser();
   }, []);
 
+  // Listen for login events so the app can refresh the current user immediately
+  useEffect(() => {
+    const onLogin = (e) => {
+      if (e?.detail) {
+        setUser(e.detail);
+      } else {
+        fetchUser();
+      }
+    };
+    window.addEventListener('user:login', onLogin);
+    return () => window.removeEventListener('user:login', onLogin);
+  }, []);
+
   const navItems = useMemo(() => {
     if (!user) {
       return [
@@ -249,7 +262,7 @@ const App = () => {
     }
 
     const items = [
-      { to: '/', label: 'Home' },
+      { to: '/home', label: 'Home' },
       { to: '/chat', label: 'Chat' },
       { to: '/forum', label: 'Community' },
       { to: '/report', label: 'Reports' },
@@ -283,7 +296,7 @@ const App = () => {
       <div className="min-h-screen">
         <header className="sticky top-0 z-50 border-b border-white/60 bg-[#f8f5ef]/82 backdrop-blur-xl">
           <div className="ss-container flex h-[76px] items-center justify-between">
-            <Link to="/" className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
+            <Link to={user ? '/home' : '/'} className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#17332e] text-white shadow-lg">
                 <Leaf size={23} />
               </span>
@@ -352,6 +365,7 @@ const App = () => {
 
         <Routes>
           <Route path="/" element={<Home user={user} />} />
+          <Route path="/home" element={<Chat />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />

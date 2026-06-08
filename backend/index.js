@@ -48,5 +48,16 @@ if (!process.env.VERCEL) {
   server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
 }
 
+// Graceful handling for server errors (e.g., port already in use)
+server.on('error', (err) => {
+  if (err && err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} already in use. Choose another port or stop the process using it.`);
+    process.exit(1);
+  } else {
+    console.error('Server error:', err);
+    process.exit(1);
+  }
+});
+
 export default app;
 
