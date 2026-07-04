@@ -1,77 +1,237 @@
 # SoulSpeak
 
-SoulSpeak is a mental wellbeing social platform with posts, companions, chat, and user accounts.
+SoulSpeak is a 7 Cups-inspired mental wellness and peer-support web app. It gives members a guided entry flow, community posting, trained companion assessment, real-time chat, reporting, and admin moderation tools.
 
-## Repository structure
-- `backend/` - Express API, Mongoose models, controllers, routes, socket logic
-- `frontend/` - Vite/React frontend
-- `uploads/` - Uploaded files (profile images, post images)
+The app is built as a MERN-style project with a Vite React frontend and an Express/MongoDB backend.
 
-## Quick setup
+## Features
 
-Prerequisites:
-- Node.js (16+)
-- npm or yarn
-- MongoDB running locally or a cloud MongoDB URI
+- Login, signup, JWT authentication, logout, and protected app routes
+- Login-first entry flow: unauthenticated users land on the login page, then go to `/home` after signing in
+- Guided onboarding that collects referral source, condition, age group, gender, country, goals, and support preferences
+- Profile dashboard with editable details, password update, email verification, and profile picture upload
+- Companion assessment using admin-managed questions
+- Companion training page with learning resources
+- Real-time one-to-one chat with Socket.IO
+- Companion discovery for members
+- Community forum with categories, image posts, comments, upvotes, editing, and deletion
+- User reporting for reviews, profile reports, and chat reports
+- Admin panel for questions, users, reports, PDF export, and account suspension/reactivation
+- Uploaded media served from the `uploads/` directory
 
-Environment variables (.env):
+## Tech Stack
 
-- `MONGO_URI` - e.g. `mongodb://localhost:27017/soulspeak`
-- `PORT` - backend port (default 5000)
-- `JWT_SECRET` - secret for signing JWTs
-- `EMAIL` / `EMAIL_PASS` - SMTP credentials used for verification and password reset (optional)
+### Frontend
 
-Example `.env`:
+- React 18
+- Vite
+- React Router
+- Tailwind CSS
+- Axios
+- Socket.IO Client
+- Lucide React icons
+- jsPDF / jspdf-autotable for report exports
 
-MONGO_URI=mongodb://localhost:27017/soulspeak
-PORT=5000
-JWT_SECRET=your_jwt_secret_here
+### Backend
 
-## Run
+- Node.js
+- Express
+- MongoDB with Mongoose
+- Socket.IO
+- JWT authentication
+- bcrypt password hashing
+- multer image uploads
+- nodemailer email flows
+- helmet, express-rate-limit, and express-validator
 
-Backend:
+## Repository Structure
 
-```bash
-cd backend
-npm install
-npm run dev   # or node index.js
+```text
+Soulspeak/
+  api/
+    index.js                 # Vercel serverless entry that exports the Express app
+  backend/
+    config/                  # Database and middleware config
+    controllers/             # API controller logic
+    models/                  # Mongoose models
+    routes/                  # Express routes
+    socket/                  # Socket.IO chat setup
+    index.js                 # Express app/server entry
+  frontend/
+    src/
+      pages/                 # React pages
+      App.jsx                # App shell, navigation, auth route guards
+      index.css              # Tailwind and shared UI styles
+    package.json             # Frontend scripts/dependencies
+  uploads/                   # Uploaded images
+  documentation.pdf          # Project documentation generated from code review
+  RUN_GUIDE.md               # Local run instructions
+  package.json               # Backend/root scripts and dependencies
+  vercel.json                # Vercel routing/build configuration
 ```
 
-Frontend (from `frontend/`):
+## Local Setup
+
+See [RUN_GUIDE.md](./RUN_GUIDE.md) for the complete run guide.
+
+Short version:
 
 ```bash
+npm install
 cd frontend
 npm install
+```
+
+Create a root `.env` file:
+
+```env
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/soulspeak
+JWT_SECRET=replace_with_a_strong_secret
+EMAIL=your_email@gmail.com
+EMAIL_PASS=your_app_password
+```
+
+Start the backend from the root folder:
+
+```bash
 npm run dev
 ```
 
-## Changes & fixes applied
+Start the frontend from another terminal:
 
-- Ensured environment variables are loaded before other modules by importing `dotenv/config` early in `backend/index.js`.
-- Fixed JWT verification to use `process.env.JWT_SECRET` at runtime in `backend/config/middlewares.js` (fallback to `soul` remains for convenience).
-- Added a username-uniqueness check in the `signup` controller (`backend/controllers/All.js`) to avoid duplicate usernames.
+```bash
+cd frontend
+npm run dev
+```
 
-### Security & reliability improvements implemented
+Open:
 
-- Rate limiting on auth endpoints using `express-rate-limit` to mitigate brute-force and abuse.
-- Input validation for `signup` and `login` using `express-validator` to return clear validation errors.
-- Account lockout on repeated failed login attempts (5 failures -> 30 minute lock) to reduce credential stuffing risks.
+```text
+http://localhost:5173
+```
 
-These are active by default; ensure you run `npm install` to add the new dependencies.
+## Important Local Port Note
 
-These fixes resolve token verification inconsistencies and common signup conflicts.
+The frontend currently calls the backend at:
 
-## Suggestions & next improvements
+```text
+http://localhost:5000
+```
 
-- Add rate-limiting on auth endpoints to mitigate brute-force attacks (e.g., `express-rate-limit`).
-- Add input validation (e.g., `Joi` or `express-validator`) for all endpoints to return precise errors.
-- Store sensitive secrets in a secure vault for production (do not commit `.env`).
-- Add account lockout on repeated failed login attempts and email verification required for activation.
-- Add unit/integration tests for auth flows and database operations.
+For local development, set this in the root `.env`:
 
-## Notes
+```env
+PORT=5000
+```
 
-- The app serves uploaded files from `/uploads` in the backend — ensure the directory exists and is writeable.
-- Email functionality requires valid SMTP credentials configured in `.env`.
+If the backend starts on another port, login, signup, chat, posts, reports, and profile requests will fail until the frontend API URL or backend port is aligned.
 
-If you'd like, I can implement any of the suggested improvements (rate limiting, validation, tests, CI), or run the app locally to verify end-to-end behavior.
+## Available Commands
+
+Run from the project root:
+
+```bash
+npm run dev
+```
+
+Starts the Express backend with nodemon.
+
+```bash
+npm run build
+```
+
+Installs frontend dependencies with `npm ci --prefix frontend` and builds the frontend.
+
+Run from `frontend/`:
+
+```bash
+npm run dev
+```
+
+Starts the Vite development server.
+
+```bash
+npm run build
+```
+
+Builds the React app into `frontend/dist`.
+
+```bash
+npm run preview
+```
+
+Previews the production frontend build locally.
+
+```bash
+npm run lint
+```
+
+Runs ESLint for the frontend.
+
+## Main Routes
+
+### Public Frontend Routes
+
+- `/` - Login page
+- `/signup` - Account creation
+- `/reset-password` - Password reset confirmation
+
+### Protected Frontend Routes
+
+- `/home` - Home/dashboard after login
+- `/chat` - Companion chat
+- `/forum` - Community forum
+- `/profile` - Member profile
+- `/report` - Reports
+- `/become-a-companion` - Companion assessment
+- `/training-program` - Companion training resources
+- `/admin` - Admin panel
+
+### Backend Route Groups
+
+- Auth/profile: `/signup`, `/login`, `/profile`, `/verify-email`, `/reset-password`
+- Forum: `/posts`, `/posts/:id/upvote`, `/posts/:id/comments`
+- Companion: `/companion`, `/companions`, `/questions`
+- Reports: `/reports`, `/admin/reports/:id/status`
+- Admin: `/admin/questions`, `/admin/users`, `/admin/suspend`, `/admin/activate`
+- Chat: `/chat`, `/chat/create`, `/chat/send`
+- Uploads: `/uploads/...`
+
+## Environment Variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `PORT` | Recommended | Backend port. Use `5000` for current frontend defaults. |
+| `MONGO_URI` | Yes | MongoDB connection string. |
+| `JWT_SECRET` | Yes | Secret used to sign and verify JWTs. |
+| `EMAIL` | For email flows | Email account used by nodemailer. |
+| `EMAIL_PASS` | For email flows | App password/SMTP password for the email account. |
+| `VERCEL` | Deployment | Used by the backend to avoid starting a listener in Vercel serverless mode. |
+
+Do not commit real `.env` secrets to GitHub.
+
+## Deployment Notes
+
+The repo includes `vercel.json` and `api/index.js`.
+
+- `api/index.js` exports the Express app for Vercel.
+- `vercel.json` points Vercel to `frontend/dist` and rewrites `/api/*` requests to the serverless API entry.
+- The frontend has an Axios interceptor in `App.jsx` that rewrites `http://localhost:5000` to `/api` when not running on localhost.
+
+Before deploying, configure environment variables in the hosting provider and run a production build.
+
+## Known Notes
+
+- The current frontend has hardcoded local API calls in several pages. The production interceptor helps, but a future improvement would be a shared API client using `import.meta.env.VITE_API_URL`.
+- Socket typing events are partially wired on the frontend, but the backend socket currently focuses on room joins and new message/new chat events.
+- Uploaded files are stored locally under `uploads/`; production deployments may need durable object storage.
+- Automated tests are not currently included.
+
+## Documentation
+
+Additional project documentation is available in:
+
+- [documentation.pdf](./documentation.pdf)
+- [RUN_GUIDE.md](./RUN_GUIDE.md)
+

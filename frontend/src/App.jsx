@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, NavLink } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, NavLink, Navigate } from 'react-router-dom';
 import axios from 'axios';
 
 // Axios interceptor to rewrite local API URL in production
@@ -21,7 +21,6 @@ import {
   LockKeyhole,
   Menu,
   MessageCircleHeart,
-  MessageSquareText,
   ShieldCheck,
   Sparkles,
   UsersRound,
@@ -215,12 +214,14 @@ const Home = ({ user }) => {
 
 const App = () => {
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const fetchUser = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       setUser(null);
+      setAuthLoading(false);
       return;
     }
 
@@ -232,6 +233,8 @@ const App = () => {
     } catch (error) {
       setUser(null);
       localStorage.removeItem('token');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -244,6 +247,7 @@ const App = () => {
     const onLogin = (e) => {
       if (e?.detail) {
         setUser(e.detail);
+        setAuthLoading(false);
       } else {
         fetchUser();
       }
@@ -255,8 +259,7 @@ const App = () => {
   const navItems = useMemo(() => {
     if (!user) {
       return [
-        { to: '/', label: 'Home' },
-        { to: '/login', label: 'Login' },
+        { to: '/', label: 'Login' },
         { to: '/signup', label: 'Sign Up' }
       ];
     }
@@ -290,6 +293,36 @@ const App = () => {
     `rounded-full px-4 py-2 text-sm font-bold transition ${
       isActive ? 'bg-[#17332e] text-white shadow-lg' : 'text-[#40534e] hover:bg-white/75 hover:text-[#17332e]'
     }`;
+
+  const ProtectedRoute = ({ children }) => {
+    if (authLoading) {
+      return (
+        <main className="ss-page flex items-center justify-center">
+          <div className="ss-panel rounded-3xl p-8 text-center">
+            <p className="text-lg font-black text-[#17332e]">Opening SoulSpeak...</p>
+            <p className="mt-2 text-sm font-semibold text-[#66746f]">Checking your session.</p>
+          </div>
+        </main>
+      );
+    }
+
+    return user ? children : <Navigate to="/" replace />;
+  };
+
+  const PublicOnlyRoute = ({ children }) => {
+    if (authLoading) {
+      return (
+        <main className="ss-page flex items-center justify-center">
+          <div className="ss-panel rounded-3xl p-8 text-center">
+            <p className="text-lg font-black text-[#17332e]">Opening SoulSpeak...</p>
+            <p className="mt-2 text-sm font-semibold text-[#66746f]">Checking your session.</p>
+          </div>
+        </main>
+      );
+    }
+
+    return user ? <Navigate to="/home" replace /> : children;
+  };
 
   return (
     <Router>
@@ -364,18 +397,19 @@ const App = () => {
         </header>
 
         <Routes>
-          <Route path="/" element={<Home user={user} />} />
-          <Route path="/home" element={<Chat />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
+          <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/become-a-companion" element={<CompanionText />} />
-          <Route path="/training-program" element={<TrainingProgram />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/forum" element={<Forum />} />
-          <Route path="/report" element={<Report />} />
-          <Route path="/chat" element={<Chat />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/home" element={<ProtectedRoute><Home user={user} /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/become-a-companion" element={<ProtectedRoute><CompanionText /></ProtectedRoute>} />
+          <Route path="/training-program" element={<ProtectedRoute><TrainingProgram /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+          <Route path="/forum" element={<ProtectedRoute><Forum /></ProtectedRoute>} />
+          <Route path="/report" element={<ProtectedRoute><Report /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to={user ? '/home' : '/'} replace />} />
         </Routes>
       </div>
     </Router>
