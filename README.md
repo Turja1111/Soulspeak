@@ -4,6 +4,12 @@ SoulSpeak is a 7 Cups-inspired mental wellness and peer-support web app. It give
 
 The app is built as a MERN-style project with a Vite React frontend and an Express/MongoDB backend.
 
+## Live Demo
+
+A deployed demo is available where authentication is bypassed so you can explore the full UI and feature set without creating an account. See the deployment link in the repository description.
+
+To run demo mode locally, set `VITE_DEMO_MODE=true` in `frontend/.env.local` before starting the frontend dev server. A banner will appear confirming that auth is disabled.
+
 ## Features
 
 - Login, signup, JWT authentication, logout, and protected app routes
@@ -204,10 +210,11 @@ Runs ESLint for the frontend.
 | --- | --- | --- |
 | `PORT` | Recommended | Backend port. Use `5000` for current frontend defaults. |
 | `MONGO_URI` | Yes | MongoDB connection string. |
-| `JWT_SECRET` | Yes | Secret used to sign and verify JWTs. |
+| `JWT_SECRET` | Yes | Secret used to sign and verify JWTs. Use a long random string in production. |
 | `EMAIL` | For email flows | Email account used by nodemailer. |
 | `EMAIL_PASS` | For email flows | App password/SMTP password for the email account. |
 | `VERCEL` | Deployment | Used by the backend to avoid starting a listener in Vercel serverless mode. |
+| `VITE_DEMO_MODE` | Demo only | Set to `true` in the frontend environment to bypass authentication and inject a guest user. Safe for public demos. Do not set in production. |
 
 Do not commit real `.env` secrets to GitHub.
 
@@ -230,8 +237,4 @@ Before deploying, configure environment variables in the hosting provider and ru
 
 ## Documentation
 
-Additional project documentation is available in:
-
-- [documentation.pdf](./documentation.pdf)
-- [RUN_GUIDE.md](./RUN_GUIDE.md)
-
+Additional setup instructions are available in [RUN_GUIDE.md](./RUN_GUIDE.md).

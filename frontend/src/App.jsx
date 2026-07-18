@@ -2,6 +2,27 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, NavLink, Navigate } from 'react-router-dom';
 import axios from 'axios';
 
+// ─── Demo Mode ────────────────────────────────────────────────────────────────
+// Set VITE_DEMO_MODE=true in your environment to bypass authentication.
+// This lets recruiters explore all features without a live backend.
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+
+const DEMO_USER = {
+  _id: 'demo-user-id',
+  name: 'Demo User',
+  username: 'demo_user',
+  email: 'demo@soulspeak.app',
+  isCompanion: false,
+  verified: true,
+  ageGroup: '18-24',
+  gender: 'Prefer not to say',
+  country: 'United States',
+  goals: 'Explore the platform',
+  preferences: 'General support',
+  mentalCondition: 'General wellness',
+  referral: 'GitHub',
+};
+
 // Axios interceptor to rewrite local API URL in production
 axios.interceptors.request.use((config) => {
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -213,11 +234,15 @@ const Home = ({ user }) => {
 };
 
 const App = () => {
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState(DEMO_MODE ? DEMO_USER : null);
+  const [authLoading, setAuthLoading] = useState(!DEMO_MODE);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [demoBannerVisible, setDemoBannerVisible] = useState(DEMO_MODE);
 
   const fetchUser = async () => {
+    // Skip real auth fetch in demo mode
+    if (DEMO_MODE) return;
+
     const token = localStorage.getItem('token');
     if (!token) {
       setUser(null);
@@ -295,6 +320,9 @@ const App = () => {
     }`;
 
   const ProtectedRoute = ({ children }) => {
+    // In demo mode, all protected routes are accessible
+    if (DEMO_MODE) return children;
+
     if (authLoading) {
       return (
         <main className="ss-page flex items-center justify-center">
@@ -327,6 +355,33 @@ const App = () => {
   return (
     <Router>
       <div className="min-h-screen">
+        {/* ── Demo Mode Banner ──────────────────────────────────────────── */}
+        {DEMO_MODE && demoBannerVisible && (
+          <div
+            role="banner"
+            className="relative z-50 flex items-center justify-between gap-3 bg-[#17332e] px-4 py-2.5 text-sm text-white"
+          >
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="font-black">🌿 Demo Mode</span>
+              <span className="text-white/70">Authentication is disabled — you are browsing as a guest. Features that require a live backend (chat, real posts, etc.) will not function.</span>
+              <a
+                href="https://github.com/Turja1111/Soulspeak"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold underline underline-offset-2 hover:text-[#f0b36f]"
+              >
+                View source on GitHub →
+              </a>
+            </p>
+            <button
+              onClick={() => setDemoBannerVisible(false)}
+              aria-label="Dismiss demo banner"
+              className="flex-shrink-0 rounded-full p-1 hover:bg-white/15"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
         <header className="sticky top-0 z-50 border-b border-white/60 bg-[#f8f5ef]/82 backdrop-blur-xl">
           <div className="ss-container flex h-[76px] items-center justify-between">
             <Link to={user ? '/home' : '/'} className="flex items-center gap-3" onClick={() => setMenuOpen(false)}>
