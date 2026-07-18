@@ -3,9 +3,10 @@ import { BrowserRouter as Router, Route, Routes, Link, NavLink, Navigate } from 
 import axios from 'axios';
 
 // ─── Demo Mode ────────────────────────────────────────────────────────────────
-// Set VITE_DEMO_MODE=true in your environment to bypass authentication.
-// This lets recruiters explore all features without a live backend.
-const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+// Automatically enabled on production (non-localhost) so recruiters can
+// explore all features without a live backend. No env variable needed.
+const IS_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const DEMO_MODE = !IS_LOCAL;
 
 const DEMO_USER = {
   _id: 'demo-user-id',
